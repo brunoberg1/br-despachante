@@ -405,8 +405,7 @@
         botoes.forEach(item => item.classList.remove("selecionado"));
         botao.classList.add("selecionado");
         
-async function acompanharPagamento(pagamentoId, placa) {
-  mensagem.textContent = "Aguardando a confirmação do Pix...";
+window.acompanharPagamento = async function(pagamentoId, placa) {
 
   for (let tentativa = 0; tentativa < 60; tentativa++) {
     try {
