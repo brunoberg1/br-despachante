@@ -450,6 +450,8 @@
         });
 
         const resultado = await resposta.json();
+       window.pagamentoAtual = resultado.pagamentoId;
+window.placaAtual = dados.placa.trim().toUpperCase();
 
         if (!resposta.ok) {
           throw new Error(resultado.erro || "Não foi possível gerar o Pix.");
