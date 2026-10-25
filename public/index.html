@@ -531,10 +531,7 @@ window.placaAtual = dados.placa.trim().toUpperCase();
 
         painelPix.style.display = "block";
 
-acompanharPagamento(
-  resultado.pagamentoId,
-  dados.placa.trim().toUpperCase()
-);
+window.acompanharPagamento(resultado.pagamentoId, dados.placa.trim().toUpperCase());
       } catch (erro) {
         mensagem.textContent =
           erro.message || "Erro de conexão. Tente novamente.";
