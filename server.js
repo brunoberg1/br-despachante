@@ -171,7 +171,27 @@ app.post("/api/pagamentos/pix", async (req, res) => {
       description: `BR Despachante - ${servico.nome}`,
       externalReference: referencia
     });
-
+await pool.query(
+  `INSERT INTO pedidos (
+    pagamento_id,
+    cliente_nome,
+    cliente_email,
+    placa,
+    servico,
+    valor_centavos,
+    status_pagamento
+  ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+  ON CONFLICT (pagamento_id) DO NOTHING`,
+  [
+    cobranca.id,
+    nome,
+    email,
+    placa,
+    servico.nome,
+    Math.round(Number(servico.valor) * 100),
+    cobranca.status || "PENDING"
+  ]
+);
     const pix = await asaasRequest(
       `/payments/${encodeURIComponent(cobranca.id)}/pixQrCode`
     );
