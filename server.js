@@ -13,6 +13,34 @@ const pool = new Pool({
     ? { rejectUnauthorized: false }
     : false
 });
+async function inicializarBanco() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pedidos (
+      id BIGSERIAL PRIMARY KEY,
+      pagamento_id TEXT UNIQUE,
+      cliente_nome TEXT,
+      cliente_email TEXT,
+      placa TEXT,
+      servico TEXT NOT NULL,
+      valor_centavos INTEGER NOT NULL,
+      status_pagamento TEXT NOT NULL DEFAULT 'PENDENTE',
+      status_consulta TEXT NOT NULL DEFAULT 'AGUARDANDO',
+      pedido_fornecedor_id TEXT,
+      resultado JSONB,
+      criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS eventos_asaas (
+      id BIGSERIAL PRIMARY KEY,
+      evento_id TEXT UNIQUE NOT NULL,
+      tipo_evento TEXT NOT NULL,
+      recebido_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  console.log("Banco de dados preparado.");
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
