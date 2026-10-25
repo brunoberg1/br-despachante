@@ -463,6 +463,47 @@ app.post("/api/webhooks/asaas", async (req, res) => {
     conexao.release();
   }
 });
+
+app.get("/api/pagamentos/:pagamentoId/status", async (req, res) => {
+  const pagamentoId = String(req.params.pagamentoId || "").trim();
+  const placa = String(req.query.placa || "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+
+  if (!pagamentoId || !placa) {
+    return res.status(400).json({
+      erro: "Informe o pagamento e a placa."
+    });
+  }
+
+  try {
+    const resultado = await pool.query(
+      `SELECT status_pagamento, status_consulta
+       FROM pedidos
+       WHERE pagamento_id = $1
+         AND placa = $2`,
+      [pagamentoId, placa]
+    );
+
+    if (resultado.rowCount === 0) {
+      return res.status(404).json({
+        erro: "Pedido não encontrado."
+      });
+    }
+
+    return res.json({
+      pagamentoId,
+      statusPagamento: resultado.rows[0].status_pagamento,
+      statusConsulta: resultado.rows[0].status_consulta
+    });
+  } catch (erro) {
+    console.error("Erro ao consultar status:", erro.message);
+    return res.status(500).json({
+      erro: "Não foi possível consultar o status."
+    });
+  }
+});
+
 app.get("/api/admin/verificar-pedido", async (req, res) => {
   const token = req.get("x-diagnostico-token");
 
