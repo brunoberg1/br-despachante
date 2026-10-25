@@ -345,7 +345,35 @@ app.post("/api/webhooks/asaas", async (req, res) => {
     conexao.release();
   }
 });
+app.get("/api/admin/verificar-pedido", async (req, res) => {
+  const token = req.get("x-diagnostico-token");
 
+  if (
+    !process.env.DIAGNOSTICO_TOKEN ||
+    token !== process.env.DIAGNOSTICO_TOKEN
+  ) {
+    return res.status(401).json({ erro: "Não autorizado." });
+  }
+
+  try {
+    const resultado = await pool.query(
+      `SELECT pagamento_id, servico, valor_centavos,
+              status_pagamento, atualizado_em
+       FROM pedidos
+       WHERE pagamento_id = $1`,
+      ["pay_h9n9pd77sj9biyh8"]
+    );
+
+    if (resultado.rowCount === 0) {
+      return res.status(404).json({ erro: "Pedido não encontrado." });
+    }
+
+    return res.json(resultado.rows[0]);
+  } catch (erro) {
+    console.error("Erro ao verificar pedido:", erro.message);
+    return res.status(500).json({ erro: "Falha na consulta." });
+  }
+});
 app.get("*", (req, res) => {
   res.sendFile(path.join(ROOT, "public", "index.html"));
 });
