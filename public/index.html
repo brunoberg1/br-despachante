@@ -450,7 +450,8 @@
         });
 
         const resultado = await resposta.json();
-       window.pagamentoAtual = resultado.pagamentoId;
+        
+      window.pagamentoAtual = resultado.pagamentoId;
 window.placaAtual = dados.placa.trim().toUpperCase();
 
         if (!resposta.ok) {
