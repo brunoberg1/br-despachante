@@ -217,13 +217,23 @@ await pool.query(
 });
 
 // Consulta veicular separada. Não é acionada pela criação do Pix.
+
 app.post("/api/consultas/agregados", async (req, res) => {
+  const pagamentoId = String(req.body?.pagamentoId || "").trim();
   const placa = String(req.body?.placa || "")
     .toUpperCase()
     .replace(/[^A-Z0-9]/g, "");
 
+  if (!pagamentoId) {
+    return res.status(400).json({
+      erro: "Identificador do pagamento obrigatório."
+    });
+  }
+
   if (!/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(placa)) {
-    return res.status(400).json({ erro: "Digite uma placa válida." });
+    return res.status(400).json({
+      erro: "Digite uma placa válida."
+    });
   }
 
   const apiKey = process.env.CARPEDIA_API_KEY;
@@ -235,18 +245,88 @@ app.post("/api/consultas/agregados", async (req, res) => {
   }
 
   try {
-    const resposta = await fetch(
-      `${CARPEDIA_BASE_URL}/consultas/agregados`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          "Idempotency-Key": crypto.randomUUID()
-        },
-        body: JSON.stringify({ placa })
-      }
+    // Localiza o pedido e confirma o pagamento.
+    const consultaPedido = await pool.query(
+      `SELECT pagamento_id, placa, servico,
+              status_pagamento, status_consulta,
+              pedido_fornecedor_id
+       FROM pedidos
+       WHERE pagamento_id = $1`,
+      [pagamentoId]
     );
+
+    if (consultaPedido.rowCount === 0) {
+      return res.status(404).json({
+        erro: "Pedido não encontrado."
+      });
+    }
+
+    const pedido = consultaPedido.rows[0];
+
+    if (pedido.status_pagamento !== "RECEIVED") {
+      return res.status(402).json({
+        erro: "O pagamento ainda não foi confirmado."
+      });
+    }
+
+    if (pedido.placa !== placa) {
+      return res.status(403).json({
+        erro: "A placa não corresponde ao pedido pago."
+      });
+    }
+
+    // Evita enviar novamente um pedido já enviado à Carpédia.
+    if (pedido.pedido_fornecedor_id) {
+      return res.status(409).json({
+        erro: "Esta consulta já foi enviada.",
+        statusConsulta: pedido.status_consulta
+      });
+    }
+
+    // Reserva o pedido antes de chamar o fornecedor.
+    const reserva = await pool.query(
+      `UPDATE pedidos
+       SET status_consulta = 'PROCESSANDO',
+           atualizado_em = NOW()
+       WHERE pagamento_id = $1
+         AND status_pagamento = 'RECEIVED'
+         AND pedido_fornecedor_id IS NULL
+         AND status_consulta = 'AGUARDANDO'
+       RETURNING pagamento_id`,
+      [pagamentoId]
+    );
+
+    if (reserva.rowCount === 0) {
+      return res.status(409).json({
+        erro: "A consulta já está em andamento ou foi solicitada."
+      });
+    }
+
+    let resposta;
+
+    try {
+      resposta = await fetch(
+        `${CARPEDIA_BASE_URL}/consultas/agregados`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+            "Idempotency-Key": pagamentoId
+          },
+          body: JSON.stringify({ placa })
+        }
+      );
+    } catch (erro) {
+      await pool.query(
+        `UPDATE pedidos
+         SET status_consulta = 'ERRO',
+             atualizado_em = NOW()
+         WHERE pagamento_id = $1`,
+        [pagamentoId]
+      );
+      throw erro;
+    }
 
     const texto = await resposta.text();
     let dados = {};
@@ -258,25 +338,63 @@ app.post("/api/consultas/agregados", async (req, res) => {
     }
 
     if (!resposta.ok) {
+      await pool.query(
+        `UPDATE pedidos
+         SET status_consulta = 'ERRO',
+             resultado = $2::jsonb,
+             atualizado_em = NOW()
+         WHERE pagamento_id = $1`,
+        [pagamentoId, JSON.stringify(dados)]
+      );
+
       console.error("Erro Carpédia:", resposta.status);
+
       return res.status(502).json({
-        erro: "A consulta não pôde ser concluída.",
+        erro: "O fornecedor não aceitou a consulta.",
         statusFornecedor: resposta.status
       });
     }
 
-    return res.json({
-      ambiente: "sandbox",
+    // A Carpédia processa a consulta de forma assíncrona.
+    const fornecedorId =
+      dados.id ||
+      dados.pedidoId ||
+      dados.pedido_id ||
+      dados.data?.id ||
+      dados.pedido?.id ||
+      null;
+
+    await pool.query(
+      `UPDATE pedidos
+       SET pedido_fornecedor_id = $2,
+           resultado = $3::jsonb,
+           status_consulta = $4,
+           atualizado_em = NOW()
+       WHERE pagamento_id = $1`,
+      [
+        pagamentoId,
+        fornecedorId,
+        JSON.stringify(dados),
+        fornecedorId ? "SOLICITADA" : "VERIFICAR_RESPOSTA"
+      ]
+    );
+
+    return res.status(202).json({
+      mensagem: fornecedorId
+        ? "Consulta enviada para processamento."
+        : "A resposta do fornecedor foi salva, mas precisa ser conferida.",
+      statusConsulta: fornecedorId ? "SOLICITADA" : "VERIFICAR_RESPOSTA",
       resultado: dados
     });
   } catch (erro) {
     console.error("Falha Carpédia:", erro.message);
+
     return res.status(502).json({
-      erro: "Não foi possível conectar à API de consulta."
+      erro: "Não foi possível concluir a solicitação de consulta."
     });
   }
 });
-
+      
 app.post("/api/webhooks/asaas", async (req, res) => {
   const tokenRecebido = req.get("asaas-access-token");
   const tokenEsperado = process.env.ASAAS_WEBHOOK_TOKEN;
