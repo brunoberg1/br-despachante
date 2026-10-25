@@ -55,10 +55,16 @@ async function asaasRequest(endpoint, method = "GET", body) {
     data = {};
   }
 
-  if (!response.ok) {
-    console.error("Erro Asaas:", response.status, data);
-    throw new Error("O Asaas não conseguiu processar a solicitação.");
-  }
+if (!response.ok) {
+  console.error("Erro Asaas:", response.status, JSON.stringify(data));
+  throw new Error(
+    `Asaas HTTP ${response.status}: ${
+      data.errors?.map(e => e.description).join("; ") ||
+      data.message ||
+      "Erro sem descrição"
+    }`
+  );
+}
 
   return data;
 }
