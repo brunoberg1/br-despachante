@@ -261,7 +261,14 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(ROOT, "public", "index.html"));
 });
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`BR Despachante iniciado na porta ${PORT}`);
-});
+inicializarBanco()
+  .then(() => {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`BR Despachante iniciado na porta ${PORT}`);
+    });
+  })
+  .catch((erro) => {
+    console.error("Erro ao preparar o banco de dados:", erro.message);
+    process.exit(1);
+  });
       
