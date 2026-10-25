@@ -277,6 +277,75 @@ app.post("/api/consultas/agregados", async (req, res) => {
   }
 });
 
+app.post("/api/webhooks/asaas", async (req, res) => {
+  const tokenRecebido = req.get("asaas-access-token");
+  const tokenEsperado = process.env.ASAAS_WEBHOOK_TOKEN;
+
+  if (!tokenEsperado || tokenRecebido !== tokenEsperado) {
+    return res.status(401).json({
+      erro: "Não autorizado."
+    });
+  }
+
+  const evento = req.body;
+  const eventoId = evento?.id;
+  const tipoEvento = evento?.event;
+  const pagamentoId = evento?.payment?.id;
+
+  if (!eventoId || !tipoEvento) {
+    return res.status(400).json({
+      erro: "Evento inválido."
+    });
+  }
+
+  const conexao = await pool.connect();
+
+  try {
+    await conexao.query("BEGIN");
+
+    const registro = await conexao.query(
+      `INSERT INTO eventos_asaas (evento_id, tipo_evento)
+       VALUES ($1, $2)
+       ON CONFLICT (evento_id) DO NOTHING
+       RETURNING id`,
+      [eventoId, tipoEvento]
+    );
+
+    if (registro.rowCount === 0) {
+      await conexao.query("COMMIT");
+      return res.status(200).json({
+        recebido: true,
+        duplicado: true
+      });
+    }
+
+    if (tipoEvento === "PAYMENT_RECEIVED" && pagamentoId) {
+      await conexao.query(
+        `UPDATE pedidos
+         SET status_pagamento = 'RECEIVED',
+             atualizado_em = NOW()
+         WHERE pagamento_id = $1`,
+        [pagamentoId]
+      );
+    }
+
+    await conexao.query("COMMIT");
+
+    return res.status(200).json({
+      recebido: true
+    });
+  } catch (erro) {
+    await conexao.query("ROLLBACK");
+    console.error("Erro no webhook Asaas:", erro.message);
+
+    return res.status(500).json({
+      erro: "Falha ao processar o evento."
+    });
+  } finally {
+    conexao.release();
+  }
+});
+
 app.get("*", (req, res) => {
   res.sendFile(path.join(ROOT, "public", "index.html"));
 });
