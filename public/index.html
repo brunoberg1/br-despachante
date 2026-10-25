@@ -404,6 +404,59 @@
 
         botoes.forEach(item => item.classList.remove("selecionado"));
         botao.classList.add("selecionado");
+        
+async function acompanharPagamento(pagamentoId, placa) {
+  mensagem.textContent = "Aguardando a confirmação do Pix...";
+
+  for (let tentativa = 0; tentativa < 60; tentativa++) {
+    try {
+      const resposta = await fetch(
+        `/api/pagamentos/${encodeURIComponent(pagamentoId)}/status?placa=${encodeURIComponent(placa)}`
+      );
+
+      const status = await resposta.json();
+
+      if (!resposta.ok) {
+        throw new Error(status.erro || "Não foi possível verificar o pagamento.");
+      }
+
+      if (status.statusPagamento === "RECEIVED") {
+        mensagem.textContent =
+          "Pix confirmado! Enviando sua consulta...";
+
+        const consultaResposta = await fetch("/api/consultas/agregados", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pagamentoId, placa })
+        });
+
+        const consulta = await consultaResposta.json();
+
+        if (!consultaResposta.ok) {
+          throw new Error(
+            consulta.erro || "Pagamento confirmado, mas não foi possível iniciar a consulta."
+          );
+        }
+
+        mensagem.textContent =
+          "Pagamento confirmado! " +
+          "A consulta foi enviada para processamento. " +
+          "Vamos preparar a exibição do resultado.";
+
+        return;
+      }
+    } catch (erro) {
+      mensagem.textContent = erro.message || "Erro ao verificar o pagamento.";
+      return;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 5000));
+  }
+
+  mensagem.textContent =
+    "Ainda não recebemos a confirmação. Se você já pagou, aguarde e atualize a página mais tarde.";
+}
+        
 
         document.getElementById("nomeServico").textContent =
           nomes[servicoSelecionado][0];
@@ -478,8 +531,11 @@ window.placaAtual = dados.placa.trim().toUpperCase();
           " · Referência: " + resultado.referencia;
 
         painelPix.style.display = "block";
-        mensagem.textContent =
-          "Cobrança de teste criada. Isso não significa que foi paga.";
+
+acompanharPagamento(
+  resultado.pagamentoId,
+  dados.placa.trim().toUpperCase()
+);
       } catch (erro) {
         mensagem.textContent =
           erro.message || "Erro de conexão. Tente novamente.";
