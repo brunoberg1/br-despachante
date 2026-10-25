@@ -2,514 +2,177 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#03110c">
-  <meta name="description" content="BR Despachante — consulte informações veiculares online.">
-  <title>BR Despachante | Consulta de Placa</title>
-
-  <style>
-    :root {
-      --green: #00e65b;
-      --green-dark: #009b3a;
-      --yellow: #ffda00;
-      --bg: #020a08;
-      --panel: #071510;
-      --muted: #a9bbb1;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      color: #fff;
-      font-family: Arial, Helvetica, sans-serif;
-      background:
-        radial-gradient(ellipse at 50% 10%, #12452c 0%, transparent 43%),
-        linear-gradient(145deg, #020806, #071b13 55%, #020705);
-    }
-
-    button, input { font: inherit; }
-
-    .top-line {
-      height: 5px;
-      background: linear-gradient(90deg, #009739, #ffdf00, #009739);
-    }
-
-    .hero {
-      position: relative;
-      overflow: hidden;
-      text-align: center;
-      padding: 48px 18px 36px;
-      border-bottom: 1px solid #17452d;
-      background:
-        radial-gradient(ellipse at 50% 100%, #14532d88, transparent 65%);
-    }
-
-    .hero::before, .hero::after {
-      content: "";
-      position: absolute;
-      width: 240px;
-      height: 240px;
-      border: 1px solid #00e65b24;
-      transform: rotate(45deg);
-      pointer-events: none;
-    }
-
-    .hero::before { left: -180px; top: 5px; }
-    .hero::after { right: -180px; top: 5px; }
-
-    .flag {
-      width: 78px;
-      height: 52px;
-      display: block;
-      margin: 0 auto 14px;
-      filter: drop-shadow(0 5px 12px #000);
-    }
-
-    .brand {
-      margin: 0;
-      font-size: clamp(2.5rem, 8vw, 5.7rem);
-      font-weight: 1000;
-      font-style: italic;
-      letter-spacing: -3px;
-      line-height: .98;
-      color: #fff;
-      text-transform: uppercase;
-      text-shadow:
-        0 2px 0 #9a9a9a,
-        0 4px 0 #555,
-        0 6px 0 #202020,
-        0 9px 18px #000,
-        0 0 24px #ffdc0050;
-    }
-
-    .brand span {
-      display: block;
-      margin-top: 8px;
-      font-size: .65em;
-      letter-spacing: -1px;
-      color: var(--yellow);
-      text-shadow:
-        0 2px 0 #a86c00,
-        0 4px 0 #593900,
-        0 7px 14px #000;
-    }
-
-    .slogan {
-      margin: 18px 0 0;
-      color: #e7f3eb;
-      font-weight: 800;
-      font-style: italic;
-      letter-spacing: 1px;
-    }
-
-    .slogan b { color: var(--green); }
-
-    .trust-top {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 10px 22px;
-      margin-top: 24px;
-      color: #e0eee5;
-      font-size: .82rem;
-      font-weight: bold;
-    }
-
-    .trust-top span::first-letter { color: var(--yellow); }
-
-    main {
-      width: min(920px, calc(100% - 30px));
-      margin: 32px auto;
-    }
-
-    .lookup {
-      padding: clamp(22px, 5vw, 48px);
-      border: 1px solid var(--green);
-      border-radius: 24px;
-      background: linear-gradient(145deg, #0a1914f5, #020b08f8);
-      box-shadow: 0 0 35px #00e65b12, 0 20px 65px #0008;
-    }
-
-    .section-title {
-      text-align: center;
-      margin: 0;
-      font-size: clamp(1.55rem, 4.7vw, 2.65rem);
-      line-height: 1.15;
-      font-weight: 1000;
-      text-transform: uppercase;
-    }
-
-    .section-title span { color: var(--green); }
-
-    .subtitle {
-      text-align: center;
-      color: #c1d1c8;
-      line-height: 1.6;
-      margin: 14px 0 28px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 10px;
-      font-size: .92rem;
-      font-weight: bold;
-      color: #dcebe1;
-    }
-
-    .plate-wrap { position: relative; }
-
-    .plate-icon {
-      position: absolute;
-      left: 17px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 1.4rem;
-    }
-
-    #plate {
-      width: 100%;
-      min-height: 65px;
-      padding: 16px 18px 16px 55px;
-      color: #fff;
-      background: #03100c;
-      border: 2px solid #22ce70;
-      border-radius: 14px;
-      outline: none;
-      font-size: 1.25rem;
-      font-weight: 800;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      transition: box-shadow .2s, border-color .2s;
-    }
-
-    #plate::placeholder {
-      color: #7d9286;
-      font-size: 1rem;
-      letter-spacing: 0;
-      font-weight: normal;
-    }
-
-    #plate:focus {
-      border-color: var(--yellow);
-      box-shadow: 0 0 0 4px #ffda0018;
-    }
-
-    #consult {
-      width: 100%;
-      min-height: 66px;
-      margin-top: 18px;
-      border: 0;
-      border-radius: 14px;
-      color: #fff;
-      background: linear-gradient(180deg, #25ed59, #00a83c);
-      box-shadow: 0 5px 0 #006d2b, 0 8px 22px #00db5430;
-      cursor: pointer;
-      font-size: 1.2rem;
-      font-weight: 1000;
-      text-transform: uppercase;
-      transition: transform .15s, filter .15s;
-    }
-
-    #consult:hover { filter: brightness(1.08); }
-    #consult:active { transform: translateY(3px); }
-    #consult:disabled { opacity: .65; cursor: wait; }
-
-    .notice {
-      margin: 16px 0 0;
-      text-align: center;
-      color: #a7b9ad;
-      font-size: .82rem;
-      line-height: 1.5;
-    }
-
-    #result {
-      display: none;
-      margin-top: 22px;
-      padding: 18px;
-      border: 1px solid #236541;
-      border-radius: 12px;
-      background: #020b08;
-      line-height: 1.55;
-      overflow-wrap: anywhere;
-    }
-
-    #result.show { display: block; }
-    #result h3 { margin: 0 0 10px; color: var(--green); }
-    #result pre {
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-      color: #d6e7dc;
-      font-size: .84rem;
-    }
-
-    .features {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-top: 30px;
-      padding-top: 24px;
-      border-top: 1px solid #173b2a;
-    }
-
-    .feature {
-      text-align: center;
-      color: #c5d8cc;
-      font-size: .82rem;
-      line-height: 1.5;
-    }
-
-    .feature strong {
-      display: block;
-      margin-bottom: 5px;
-      color: var(--green);
-      font-size: 1.35rem;
-    }
-
-    .bottom {
-      text-align: center;
-      padding: 12px 16px 30px;
-    }
-
-    .bottom h2 {
-      margin: 0 0 8px;
-      font-size: clamp(1.25rem, 4vw, 2rem);
-      font-style: italic;
-      text-transform: uppercase;
-    }
-
-    .bottom h2 span { color: var(--green); }
-
-    .bottom p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.7;
-      font-size: .9rem;
-    }
-
-    footer {
-      border-top: 1px solid #173b2a;
-      text-align: center;
-      padding: 22px 14px;
-      color: #93a89b;
-      font-size: .8rem;
-    }
-
-    .loading-dot {
-      display: inline-block;
-      animation: pulse 1s infinite alternate;
-    }
-
-    @keyframes pulse {
-      from { opacity: .35; }
-      to { opacity: 1; }
-    }
-
-    @media (max-width: 580px) {
-      .hero { padding-top: 36px; }
-      .brand { letter-spacing: -2px; }
-      .lookup { border-radius: 18px; }
-      .features { grid-template-columns: repeat(2, 1fr); }
-      .feature { padding: 8px 2px; }
-      #plate { min-height: 60px; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation: none !important;
-        transition: none !important;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#03110c">
+<title>BR Despachante | Consultas Veiculares</title>
+<style>
+:root{--green:#00e65b;--yellow:#ffdf00;--bg:#030b07;--panel:#0a1912;--muted:#b8c9bd}
+*{box-sizing:border-box}
+body{margin:0;color:#fff;font-family:Arial,Helvetica,sans-serif;background:radial-gradient(ellipse at 50% 0,#14512f,transparent 55%),linear-gradient(140deg,#020705,#07190f 55%,#020705);min-height:100vh}
+.topline{height:5px;background:linear-gradient(90deg,#009739,#ffdf00,#009739)}
+header{text-align:center;padding:38px 15px 30px;border-bottom:1px solid #235637;background:linear-gradient(180deg,#06201388,transparent)}
+.flag{width:74px;height:50px;filter:drop-shadow(0 5px 9px #000)}
+.brand{margin:13px 0 0;font-size:clamp(2.8rem,10vw,5.5rem);font-weight:1000;font-style:italic;letter-spacing:-3px;line-height:.95;text-shadow:0 2px #aaa,0 4px #555,0 7px #222,0 10px 17px #000}
+.brand span{display:block;margin-top:8px;color:var(--yellow);font-size:.57em;letter-spacing:-1px;text-shadow:0 2px #9b6d00,0 4px #4c3500,0 7px 13px #000}
+.slogan{font-weight:bold;font-style:italic;letter-spacing:1px;margin:18px 0 0}.slogan b{color:var(--green)}
+.trust{display:flex;justify-content:center;gap:10px 20px;flex-wrap:wrap;margin-top:22px;font-size:.8rem;font-weight:bold;color:#e1f1e6}
+main{width:min(960px,calc(100% - 28px));margin:28px auto 35px}
+.panel{border:1px solid #247943;border-radius:20px;background:linear-gradient(145deg,#0a1d13f5,#030b07f7);padding:clamp(18px,4vw,34px);margin-bottom:24px;box-shadow:0 18px 45px #0005}
+h2{margin:0;text-align:center;font-size:clamp(1.5rem,5vw,2.25rem);font-weight:1000;text-transform:uppercase}
+h2 span{color:var(--green)}
+.subtitle{text-align:center;color:#c1d1c6;line-height:1.6;margin:12px auto 25px}
+.catalog{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.service{display:flex;flex-direction:column;align-items:flex-start;gap:9px;text-align:left;min-width:0;padding:17px 15px;color:#fff;background:linear-gradient(145deg,#10291c,#04100a);border:1px solid #28573a;border-radius:14px;cursor:pointer;transition:.18s}
+.service:hover{border-color:var(--green);transform:translateY(-2px)}
+.service.selected{border:2px solid var(--green);box-shadow:0 0 17px #00e65b25}
+.service.featured{background:linear-gradient(145deg,#283618,#07140b)}
+.service .emoji{font-size:1.6rem}.service strong{font-size:1rem}.service small{color:#b9cabe;line-height:1.4}.service .price{color:#22ed65;font-size:1.3rem;font-weight:900;margin-top:auto;padding-top:4px}
+.selected-box{text-align:center;background:#03100a;border:1px solid #255537;border-radius:12px;padding:15px;margin-top:17px;line-height:1.6}
+.selected-box strong{color:var(--green)}
+label{display:block;margin:0 0 9px;font-weight:bold}
+input{width:100%;min-height:59px;padding:14px 16px;border:2px solid #22ce70;border-radius:12px;background:#03100c;color:#fff;font-size:1.2rem;font-weight:bold;letter-spacing:2px;text-transform:uppercase;outline:none}
+input:focus{border-color:var(--yellow);box-shadow:0 0 0 4px #ffdf0018}
+input::placeholder{color:#819589;font-size:1rem;letter-spacing:0;font-weight:normal}
+.primary{width:100%;min-height:60px;margin-top:16px;border:0;border-radius:12px;background:linear-gradient(#25ed59,#00a83c);box-shadow:0 5px #006d2b;color:#fff;font-weight:1000;font-size:1.1rem;cursor:pointer}
+.primary:disabled{opacity:.65;cursor:wait}
+.notice{text-align:center;color:#9fb3a5;font-size:.82rem;line-height:1.6;margin:15px 0 0}
+#result{display:none;overflow-wrap:anywhere;margin-top:18px;padding:16px;border:1px solid #28633d;border-radius:12px;background:#020b07;line-height:1.6}
+#result.show{display:block}#result h3{color:var(--green);margin:0 0 8px}
+footer{text-align:center;border-top:1px solid #20452e;padding:23px 14px;color:#9eb2a4;font-size:.82rem;line-height:1.7}
+@media(max-width:420px){.catalog{grid-template-columns:1fr}.trust{font-size:.73rem}.brand{letter-spacing:-2px}}
+</style>
 </head>
-
 <body>
-  <div class="top-line"></div>
+<div class="topline"></div>
+<header>
+<svg class="flag" viewBox="0 0 140 95" role="img" aria-label="Bandeira do Brasil">
+<rect width="140" height="95" rx="5" fill="#009739"/>
+<path d="M70 10L130 47.5 70 85 10 47.5Z" fill="#FFDF00"/>
+<circle cx="70" cy="47.5" r="24" fill="#002776"/>
+<path d="M47 42Q70 36 93 48" fill="none" stroke="#fff" stroke-width="4"/>
+<g fill="#fff"><circle cx="59" cy="39" r="1.6"/><circle cx="69" cy="32" r="1.5"/><circle cx="79" cy="38" r="1.5"/><circle cx="83" cy="52" r="1.5"/><circle cx="65" cy="59" r="1.5"/><circle cx="55" cy="51" r="1.5"/></g>
+</svg>
+<h1 class="brand">BR<span>DESPACHANTE</span></h1>
+<p class="slogan">SEU DOCUMENTO, <b>NOSSA PRIORIDADE!</b></p>
+<div class="trust"><span>✓ ATENDIMENTO ONLINE</span><span>✓ CONSULTA VEICULAR</span><span>✓ PRATICIDADE</span></div>
+</header>
 
-  <header class="hero">
-    <svg class="flag" viewBox="0 0 140 95" role="img" aria-label="Bandeira do Brasil">
-      <rect width="140" height="95" rx="5" fill="#009739"/>
-      <path d="M70 10 L130 47.5 L70 85 L10 47.5 Z" fill="#FFDF00"/>
-      <circle cx="70" cy="47.5" r="24" fill="#002776"/>
-      <path d="M47 42 Q70 36 93 48" fill="none" stroke="#fff" stroke-width="4"/>
-      <g fill="#fff">
-        <circle cx="59" cy="39" r="1.6"/>
-        <circle cx="69" cy="32" r="1.5"/>
-        <circle cx="79" cy="38" r="1.5"/>
-        <circle cx="83" cy="52" r="1.5"/>
-        <circle cx="65" cy="59" r="1.5"/>
-        <circle cx="55" cy="51" r="1.5"/>
-      </g>
-    </svg>
+<main>
+<section class="panel" id="catalogo">
+<h2>NOSSAS <span>CONSULTAS</span></h2>
+<p class="subtitle">Escolha o serviço desejado e veja o valor antes de continuar.</p>
 
-    <h1 class="brand">
-      BR
-      <span>DESPACHANTE</span>
-    </h1>
+<div class="catalog">
+<button type="button" class="service selected" data-service="Dados básicos do veículo" data-price="9.90">
+<span class="emoji">🚘</span><strong>Dados básicos</strong><small>Informações básicas do veículo</small><span class="price">R$ 9,90</span>
+</button>
+<button type="button" class="service" data-service="Consulta de gravame" data-price="14.90">
+<span class="emoji">📄</span><strong>Consulta de gravame</strong><small>Financiamento e gravame, conforme cobertura</small><span class="price">R$ 14,90</span>
+</button>
+<button type="button" class="service" data-service="Restrições nacionais" data-price="19.90">
+<span class="emoji">🛡️</span><strong>Restrições nacionais</strong><small>Restrições disponíveis na base consultada</small><span class="price">R$ 19,90</span>
+</button>
+<button type="button" class="service" data-service="Roubo e furto" data-price="19.90">
+<span class="emoji">🔎</span><strong>Roubo e furto</strong><small>Consulta conforme cobertura disponível</small><span class="price">R$ 19,90</span>
+</button>
+<button type="button" class="service" data-service="Indício de sinistro" data-price="24.90">
+<span class="emoji">🚗</span><strong>Indício de sinistro</strong><small>Histórico quando disponível na base</small><span class="price">R$ 24,90</span>
+</button>
+<button type="button" class="service" data-service="Consulta de leilão" data-price="34.90">
+<span class="emoji">🏷️</span><strong>Consulta de leilão</strong><small>Indícios de passagem por leilão</small><span class="price">R$ 34,90</span>
+</button>
+<button type="button" class="service featured" data-service="Consulta completa" data-price="49.90">
+<span class="emoji">⭐</span><strong>Consulta completa</strong><small>Pacote sujeito à confirmação de cobertura</small><span class="price">R$ 49,90</span>
+</button>
+</div>
 
-    <p class="slogan">SEU DOCUMENTO, <b>NOSSA PRIORIDADE!</b></p>
+<div class="selected-box" id="selectedBox">
+Serviço selecionado: <strong id="selectedName">Dados básicos do veículo</strong><br>
+Total: <strong id="selectedPrice">R$ 9,90</strong>
+</div>
+</section>
 
-    <div class="trust-top">
-      <span>✓ ATENDIMENTO ONLINE</span>
-      <span>✓ CONSULTA DE PLACA</span>
-      <span>✓ PRATICIDADE</span>
-    </div>
-  </header>
+<section class="panel" id="consulta">
+<h2>CONSULTA DE <span>PLACA</span></h2>
+<p class="subtitle">Informe a placa do veículo para preparar sua solicitação.</p>
+<form id="lookupForm">
+<label for="plate">PLACA DO VEÍCULO</label>
+<input id="plate" name="placa" type="text" placeholder="Ex.: ABC1D23" maxlength="7" minlength="7" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
+<button class="primary" id="consult" type="submit">🔎 &nbsp; CONTINUAR</button>
+<p class="notice">Os preços são apresentados antes de continuar. O pagamento Pix ainda não está habilitado nesta versão.</p>
+</form>
+<div id="result" role="status" aria-live="polite"><h3 id="resultTitle">Informação</h3><div id="resultText"></div></div>
+</section>
 
-  <main>
-    <section class="lookup">
-      <h2 class="section-title">CONSULTA DE <span>PLACA</span></h2>
-      <p class="subtitle">
-        Digite a placa do veículo para iniciar sua solicitação.
-      </p>
+<p class="notice">BR DESPACHANTE — atendimento online. A disponibilidade dos dados depende do serviço contratado e da base consultada.</p>
+</main>
 
-      <form id="lookupForm">
-        <label for="plate">PLACA DO VEÍCULO</label>
+<footer>🇧🇷 BR DESPACHANTE<br>© <span id="year"></span> Todos os direitos reservados.</footer>
 
-        <div class="plate-wrap">
-          <span class="plate-icon" aria-hidden="true">🚘</span>
-          <input
-            id="plate"
-            name="placa"
-            type="text"
-            placeholder="Ex.: ABC1D23"
-            maxlength="7"
-            minlength="7"
-            autocomplete="off"
-            autocapitalize="characters"
-            spellcheck="false"
-            required
-            aria-describedby="plateHelp"
-          >
-        </div>
+<script>
+const cards = document.querySelectorAll(".service");
+const selectedName = document.getElementById("selectedName");
+const selectedPrice = document.getElementById("selectedPrice");
+const form = document.getElementById("lookupForm");
+const plate = document.getElementById("plate");
+const result = document.getElementById("result");
+const resultTitle = document.getElementById("resultTitle");
+const resultText = document.getElementById("resultText");
+const button = document.getElementById("consult");
 
-        <button id="consult" type="submit">
-          🔎 &nbsp; CONSULTAR
-        </button>
+let selectedService = {
+  name: "Dados básicos do veículo",
+  price: 9.90
+};
 
-        <p id="plateHelp" class="notice">
-          Ao continuar, você solicita uma consulta pela API do serviço.
-          A disponibilidade dos dados depende do fornecedor.
-        </p>
-      </form>
+document.getElementById("year").textContent = new Date().getFullYear();
 
-      <div id="result" role="status" aria-live="polite">
-        <h3 id="resultTitle">Resultado da solicitação</h3>
-        <div id="resultText"></div>
-      </div>
+function money(value) {
+  return Number(value).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL"
+  });
+}
 
-      <div class="features">
-        <div class="feature">
-          <strong>✓</strong>
-          Solicitação online
-        </div>
-        <div class="feature">
-          <strong>⌁</strong>
-          Acompanhamento
-        </div>
-        <div class="feature">
-          <strong>◆</strong>
-          Atendimento digital
-        </div>
-        <div class="feature">
-          <strong>◷</strong>
-          Praticidade
-        </div>
-      </div>
-    </section>
+cards.forEach(card => {
+  card.addEventListener("click", () => {
+    cards.forEach(item => item.classList.remove("selected"));
+    card.classList.add("selected");
+    selectedService = {
+      name: card.dataset.service,
+      price: Number(card.dataset.price)
+    };
+    selectedName.textContent = selectedService.name;
+    selectedPrice.textContent = money(selectedService.price);
+  });
+});
 
-    <section class="bottom">
-      <h2>AQUI VOCÊ CONSULTA <span>COM CONFIANÇA!</span></h2>
-      <p>🇧🇷 BR DESPACHANTE — atendimento online.</p>
-    </section>
-  </main>
+plate.addEventListener("input", () => {
+  plate.value = plate.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 7);
+});
 
-  <footer>
-    © <span id="year"></span> BR DESPACHANTE. Todos os direitos reservados.
-  </footer>
+form.addEventListener("submit", async event => {
+  event.preventDefault();
 
-  <script>
-    const form = document.getElementById("lookupForm");
-    const plateInput = document.getElementById("plate");
-    const button = document.getElementById("consult");
-    const result = document.getElementById("result");
-    const resultTitle = document.getElementById("resultTitle");
-    const resultText = document.getElementById("resultText");
+  const value = plate.value.trim().toUpperCase();
 
-    document.getElementById("year").textContent = new Date().getFullYear();
+  if (!/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(value)) {
+    resultTitle.textContent = "Confira a placa";
+    resultText.textContent = "Digite uma placa válida com 7 caracteres, por exemplo ABC1D23.";
+    result.classList.add("show");
+    return;
+  }
 
-    plateInput.addEventListener("input", () => {
-      plateInput.value = plateInput.value
-        .toUpperCase()
-        .replace(/[^A-Z0-9]/g, "")
-        .slice(0, 7);
-    });
+  result.classList.add("show");
+  resultTitle.textContent = "Próxima etapa";
+  resultText.textContent =
+    "Você selecionou " + selectedService.name + " por " +
+    money(selectedService.price) + ". O Pix ainda está sendo configurado; nenhuma cobrança foi criada e nenhuma consulta foi executada.";
 
-    function showMessage(title, message) {
-      resultTitle.textContent = title;
-      resultText.textContent = message;
-      result.classList.add("show");
-    }
+  document.getElementById("consulta").scrollIntoView({behavior:"smooth", block:"start"});
+});
 
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-
-      const placa = plateInput.value.trim().toUpperCase();
-
-      if (!/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(placa)) {
-        showMessage(
-          "Confira a placa",
-          "Digite uma placa válida com 7 caracteres, por exemplo ABC1D23."
-        );
-        return;
-      }
-
-      button.disabled = true;
-      button.innerHTML = '<span class="loading-dot">⏳ ENVIANDO SOLICITAÇÃO...</span>';
-      result.classList.add("show");
-      resultTitle.textContent = "Aguarde";
-      resultText.textContent = "Estamos enviando sua solicitação ao serviço de consulta.";
-
-      try {
-        const response = await fetch("/api/consultas/agregados", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ placa })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          showMessage(
-            "Não foi possível consultar",
-            data.erro || "O serviço está indisponível. Tente novamente mais tarde."
-          );
-          return;
-        }
-
-        resultTitle.textContent = "Solicitação enviada";
-        resultText.textContent =
-          (data.mensagem || "A solicitação foi recebida.") +
-          (data.ambiente === "sandbox"
-            ? " Esta é uma resposta do ambiente de testes; ela não confirma dados reais do veículo."
-            : "") +
-          (data.acompanhamento
-            ? " Existe um endereço de acompanhamento fornecido pela API."
-            : "") +
-          " Se o fornecedor ainda estiver processando o pedido, o resultado final poderá exigir uma consulta de acompanhamento.";
-      } catch (error) {
-        showMessage(
-          "Falha de conexão",
-          "Não conseguimos falar com o servidor. Verifique se o site terminou de carregar e tente novamente."
-        );
-      } finally {
-        button.disabled = false;
-        button.innerHTML = "🔎 &nbsp; CONSULTAR";
-      }
-    });
-  </script>
+</script>
 </body>
 </html>
-
